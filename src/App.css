@@ -146,7 +146,7 @@
   display: flex;
   flex-direction: column;
   min-height: 100vh;
-  padding: 0.75rem 0.75rem 1.5rem;
+  padding: 0.75rem clamp(0.5rem, 2vw, 1rem) 1.5rem;
 }
 
 .play-bar {
@@ -181,7 +181,7 @@
 
 .play-table-column {
   width: 100%;
-  max-width: 560px;
+  max-width: min(100%, 700px);
   margin: 0 auto;
   flex: 1;
   display: flex;
@@ -194,18 +194,19 @@
   border-radius: 16px;
   border: 1px solid rgba(255, 255, 255, 0.08);
   padding: 0;
-  overflow: hidden;
-  min-height: min(48vh, 440px);
+  /* Let opponent cards extend slightly past the rounded box instead of clipping */
+  overflow: visible;
+  min-height: min(62vh, 560px);
 }
 
 .felt {
   position: relative;
-  min-height: min(48vh, 440px);
+  min-height: min(62vh, 560px);
   height: 100%;
-  /* Extra bottom padding so hero sits in reserved strip; bots stay in upper ellipse only */
-  padding-bottom: clamp(7.5rem, 28vw, 10rem);
+  /* Room for hero + taller arc so all bots stay on the green */
+  padding-bottom: clamp(8.5rem, 30vw, 12rem);
   background:
-    radial-gradient(ellipse 85% 62% at 50% 36%, #26734f 0%, #143828 55%, #0c2218 100%);
+    radial-gradient(ellipse 92% 68% at 50% 34%, #26734f 0%, #143828 55%, #0c2218 100%);
   border-radius: 16px;
 }
 
@@ -228,7 +229,7 @@
 
 .seats-ring {
   position: absolute;
-  inset: 5% 5% 32%;
+  inset: 4% 4% 30%;
   border-radius: 50%;
   border: 2px solid rgba(255, 255, 255, 0.07);
   pointer-events: none;
@@ -476,13 +477,25 @@
   margin-bottom: 0.75rem;
 }
 
+@media (min-width: 640px) {
+  .table-wrap,
+  .felt {
+    min-height: min(64vh, 600px);
+  }
+}
+
 @media (min-width: 900px) {
   .play {
-    max-width: 720px;
+    max-width: 820px;
     margin: 0 auto;
   }
 
   .play-table-column {
-    max-width: 600px;
+    max-width: 760px;
+  }
+
+  .table-wrap,
+  .felt {
+    min-height: min(66vh, 640px);
   }
 }
