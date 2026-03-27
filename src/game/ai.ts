@@ -22,52 +22,94 @@ export interface AiContext {
 }
 
 function noise(difficulty: Difficulty): number {
-  if (difficulty === 'easy') return (Math.random() - 0.5) * 0.45
-  if (difficulty === 'medium') return (Math.random() - 0.5) * 0.22
-  return (Math.random() - 0.5) * 0.08
+  if (difficulty === 'easy') return (Math.random() - 0.5) * 0.35
+  if (difficulty === 'medium') return (Math.random() - 0.5) * 0.18
+  return (Math.random() - 0.5) * 0.09
 }
 
+/** Map poker score to 0..1 for heuristics (not true equity). */
 function handStrength01(score: HandScore | null): number {
   if (!score) return 0
   const cat = score[0] / 8
   const k = (score[1] ?? 0) / 12
-  return Math.min(1, cat * 0.85 + k * 0.15)
+  return Math.min(1, cat * 0.82 + k * 0.18)
+}
+
+/**
+ * How strong we "look" and "are" for calling / raising — visible cards weigh
+ * heavily (representation / semi-bluff), full hand for real strength.
+ */
+function playStrength(full: number, visible: number): number {
+  return Math.max(full, visible * 0.88 + full * 0.12)
 }
 
 export function pickAiAction(ctx: AiContext): AiAction {
   const cards = [...ctx.hole, ...ctx.up]
-  const score = bestHandScore(cards)
-  let s = handStrength01(score)
+  const scoreFull = bestHandScore(cards)
+  const scoreVis = bestHandScore(ctx.up)
+  let s = handStrength01(scoreFull)
+  const v = handStrength01(scoreVis)
   s += noise(ctx.difficulty)
   s = Math.max(0, Math.min(1, s))
+  const p = playStrength(s, v)
 
-  const potOdds =
-    ctx.toCall > 0 ? ctx.pot / (ctx.pot + ctx.toCall) : 0.55
-  const pressure = ctx.activeOpponents > 2 ? 0.06 : 0
+  const pressure = ctx.activeOpponents > 2 ? 0.04 : 0
 
   if (ctx.canCheck) {
-    if (s < 0.28 - pressure && ctx.difficulty === 'easy' && Math.random() < 0.15) {
+    if (s < 0.26 - pressure && ctx.difficulty === 'easy' && Math.random() < 0.12) {
       return 'raise'
     }
-    if (s < 0.35) return 'check'
-    if (s > 0.62 && ctx.canRaise) return 'raise'
+    if (p < 0.32) return 'check'
+    if (p > 0.58 && ctx.canRaise && Math.random() < 0.45) return 'raise'
+    if (p > 0.48 && ctx.canRaise && v > 0.42 && Math.random() < 0.28) {
+      return 'raise'
+    }
     return 'check'
   }
 
   if (ctx.toCall > 0) {
     if (ctx.stack <= ctx.toCall) return 'call'
-    if (s < 0.22 + (ctx.difficulty === 'hard' ? 0.05 : 0)) return 'fold'
-    if (s < potOdds - (ctx.difficulty === 'hard' ? 0.12 : 0.05)) {
-      return Math.random() < (ctx.difficulty === 'easy' ? 0.35 : 0.12) ? 'call' : 'fold'
+
+    const potAfter = ctx.pot + ctx.toCall
+    const potOdds = ctx.pot / potAfter
+
+    /** Rough "price" of calling one bet in limit — call more when pot is big. */
+    const looseCallBias =
+      ctx.difficulty === 'easy' ? 0.22 : ctx.difficulty === 'medium' ? 0.16 : 0.1
+
+    const junkFold =
+      p < (ctx.difficulty === 'hard' ? 0.07 : ctx.difficulty === 'medium' ? 0.09 : 0.11) &&
+      v < 0.14
+
+    if (junkFold && Math.random() < (ctx.difficulty === 'easy' ? 0.45 : 0.62)) {
+      return 'fold'
     }
-    if (s > 0.72 && ctx.canRaise) return 'raise'
-    if (s > 0.55 && ctx.canRaise && ctx.difficulty !== 'easy' && Math.random() < 0.25) {
-      return 'raise'
+
+    if (ctx.canRaise) {
+      const strongRaise = p > 0.58 && Math.random() < (ctx.difficulty === 'hard' ? 0.52 : 0.38)
+      const semiBluff =
+        v > 0.4 &&
+        s > 0.14 &&
+        Math.random() <
+          (ctx.difficulty === 'easy' ? 0.12 : ctx.difficulty === 'medium' ? 0.22 : 0.32)
+      const thinValue =
+        p > 0.45 &&
+        p < 0.62 &&
+        Math.random() < (ctx.difficulty === 'hard' ? 0.2 : 0.12)
+      if (strongRaise || semiBluff || thinValue) return 'raise'
     }
-    return 'call'
+
+    const callThreshold = potOdds - looseCallBias
+    if (p >= callThreshold || p > 0.16) return 'call'
+
+    const peel =
+      potOdds > 0.35 && Math.random() < (ctx.difficulty === 'easy' ? 0.55 : 0.35)
+    if (peel) return 'call'
+
+    return Math.random() < (ctx.difficulty === 'easy' ? 0.42 : 0.28) ? 'call' : 'fold'
   }
 
-  if (ctx.canRaise && s > 0.58) return 'raise'
+  if (ctx.canRaise && p > 0.55) return 'raise'
   return 'check'
 }
 

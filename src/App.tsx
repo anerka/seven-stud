@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useState, type CSSProperties } from 'react'
 import {
   StudEngine,
   type HumanAction,
@@ -14,6 +14,17 @@ import {
   type GameSettings,
 } from './settings/types'
 import './App.css'
+
+/** Seat bots along the top arc (degrees, 0 = right, -90 = top). */
+function opponentSeatAngles(count: number): number[] {
+  if (count <= 0) return []
+  if (count === 1) return [-90]
+  const start = -158
+  const end = -22
+  return Array.from({ length: count }, (_, i) => {
+    return start + ((end - start) * i) / (count - 1)
+  })
+}
 
 type Screen = 'menu' | 'settings' | 'play'
 
@@ -307,6 +318,50 @@ function PlayScreen({
 
   const showAllHoles = snap.phase === 'handSummary'
 
+  const heroIdx = snap.players.findIndex((p) => p.isHuman)
+  const hero = heroIdx >= 0 ? snap.players[heroIdx] : undefined
+  const opponents = snap.players.filter((p) => !p.isHuman)
+  const angles = opponentSeatAngles(opponents.length)
+
+  const renderSeat = (p: (typeof snap.players)[0], idx: number, heroSeat: boolean) => {
+    const isDealer = idx === snap.dealerIndex
+    const isActor = idx === snap.actionIndex && snap.phase === 'betting'
+    const hole =
+      p.isHuman || showAllHoles
+        ? p.hole.map((c, i) => (
+            <span key={i} className="card hole">
+              {formatCard(c)}
+            </span>
+          ))
+        : p.hole.map((_, i) => (
+            <span key={i} className="card back">
+              ●
+            </span>
+          ))
+    const up = p.up.map((c, i) => (
+      <span key={i} className="card up">
+        {formatCard(c)}
+      </span>
+    ))
+    const best =
+      showAllHoles && !p.folded ? bestHandScore([...p.hole, ...p.up]) : null
+    return (
+      <div
+        className={`player-card ${isActor ? 'acting' : ''} ${p.folded ? 'folded' : ''} ${heroSeat ? 'player-card--hero' : ''}`}
+      >
+        <div className="player-head">
+          <span>{p.name}</span>
+          {isDealer ? <span className="dealer-pill">D</span> : null}
+          {p.folded ? <span className="fold-pill">Fold</span> : null}
+        </div>
+        <div className="stack">Stack {p.stack}</div>
+        <div className="cards-row">{hole}</div>
+        <div className="cards-row up">{up}</div>
+        {best ? <div className="best-hand">{handLabel(best)}</div> : null}
+      </div>
+    )
+  }
+
   return (
     <div className="app play">
       <header className="play-bar">
@@ -325,50 +380,33 @@ function PlayScreen({
       <p className="status-msg">{snap.message}</p>
 
       <div className="table-wrap">
-        <div className="players-row">
-          {snap.players.map((p, idx) => {
-            const isDealer = idx === snap.dealerIndex
-            const isActor = idx === snap.actionIndex && snap.phase === 'betting'
-            const hole =
-              p.isHuman || showAllHoles
-                ? p.hole.map((c, i) => (
-                    <span key={i} className="card hole">
-                      {formatCard(c)}
-                    </span>
-                  ))
-                : p.hole.map((_, i) => (
-                    <span key={i} className="card back">
-                      ●
-                    </span>
-                  ))
-            const up = p.up.map((c, i) => (
-              <span key={i} className="card up">
-                {formatCard(c)}
-              </span>
-            ))
-            const best =
-              showAllHoles && !p.folded
-                ? bestHandScore([...p.hole, ...p.up])
-                : null
-            return (
-              <div
-                key={p.id}
-                className={`player-card ${isActor ? 'acting' : ''} ${p.folded ? 'folded' : ''}`}
-              >
-                <div className="player-head">
-                  <span>{p.name}</span>
-                  {isDealer ? <span className="dealer-pill">D</span> : null}
-                  {p.folded ? <span className="fold-pill">Fold</span> : null}
+        <div className="felt">
+          <div className="felt-pot-badge" aria-hidden="true">
+            {snap.pot}
+          </div>
+          <div className="seats-ring" aria-hidden="true" />
+          <div className="opponent-seats">
+            {opponents.map((p, i) => {
+              const idx = snap.players.findIndex((x) => x.id === p.id)
+              const ang = angles[i] ?? -90
+              return (
+                <div
+                  key={p.id}
+                  className="seat seat--opp"
+                  style={
+                    {
+                      '--seat-angle': `${ang}deg`,
+                    } as CSSProperties
+                  }
+                >
+                  {renderSeat(p, idx, false)}
                 </div>
-                <div className="stack">Stack {p.stack}</div>
-                <div className="cards-row">{hole}</div>
-                <div className="cards-row up">{up}</div>
-                {best ? (
-                  <div className="best-hand">{handLabel(best)}</div>
-                ) : null}
-              </div>
-            )
-          })}
+              )
+            })}
+          </div>
+          {hero && heroIdx >= 0 ? (
+            <div className="seat seat--hero">{renderSeat(hero, heroIdx, true)}</div>
+          ) : null}
         </div>
       </div>
 

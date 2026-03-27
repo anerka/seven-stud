@@ -181,25 +181,105 @@
 
 .table-wrap {
   flex: 1;
-  background: radial-gradient(ellipse at center, #1e4d36 0%, #0f2a1f 70%);
   border-radius: 16px;
   border: 1px solid rgba(255, 255, 255, 0.08);
-  padding: 0.75rem;
-  overflow-x: auto;
+  padding: 0;
+  overflow: hidden;
+  min-height: min(52vh, 480px);
 }
 
-.players-row {
+.felt {
+  position: relative;
+  min-height: min(52vh, 480px);
+  height: 100%;
+  background:
+    radial-gradient(ellipse 85% 65% at 50% 42%, #26734f 0%, #143828 55%, #0c2218 100%);
+  border-radius: 16px;
+}
+
+.felt-pot-badge {
+  position: absolute;
+  left: 50%;
+  top: 42%;
+  transform: translate(-50%, -50%);
+  padding: 0.35rem 0.75rem;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+  color: #f5e9b8;
+  background: rgba(0, 0, 0, 0.35);
+  border: 1px solid rgba(255, 220, 140, 0.25);
+  pointer-events: none;
+  z-index: 1;
+}
+
+.seats-ring {
+  position: absolute;
+  inset: 8% 6% 28%;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.07);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.opponent-seats {
+  position: absolute;
+  left: 50%;
+  top: 44%;
+  width: 0;
+  height: 0;
+  z-index: 2;
+}
+
+.seat--opp {
+  position: absolute;
+  left: 0;
+  top: 0;
+  transform: translate(-50%, -50%) rotate(var(--seat-angle, -90deg))
+    translateY(calc(-1 * min(36vw, 200px))) rotate(calc(-1 * var(--seat-angle, -90deg)));
+}
+
+.seat--hero {
+  position: absolute;
+  left: 50%;
+  bottom: 0;
+  transform: translateX(-50%);
+  width: min(100% - 1rem, 400px);
+  z-index: 3;
   display: flex;
-  gap: 0.65rem;
-  min-width: min-content;
+  justify-content: center;
+  padding-bottom: 0.5rem;
 }
 
 .player-card {
-  min-width: 132px;
+  min-width: 120px;
+  max-width: 100%;
   padding: 0.5rem 0.55rem;
   border-radius: 12px;
-  background: rgba(0, 0, 0, 0.2);
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: rgba(0, 0, 0, 0.28);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.player-card--hero {
+  min-width: 0;
+  width: 100%;
+  background: rgba(0, 0, 0, 0.38);
+  border-color: rgba(180, 220, 190, 0.2);
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.35);
+}
+
+.player-card--hero .cards-row {
+  justify-content: center;
+}
+
+.player-card--hero .player-head {
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.player-card--hero .stack {
+  text-align: center;
 }
 
 .player-card.acting {
