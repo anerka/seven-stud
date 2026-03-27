@@ -203,17 +203,18 @@
   position: relative;
   min-height: min(62vh, 560px);
   height: 100%;
-  /* Room for hero + taller arc so all bots stay on the green */
+  padding-top: clamp(0.65rem, 2.2vh, 1.1rem);
+  /* Room for hero; ellipse sits between top padding and hero strip */
   padding-bottom: clamp(8.5rem, 30vw, 12rem);
   background:
-    radial-gradient(ellipse 92% 68% at 50% 34%, #26734f 0%, #143828 55%, #0c2218 100%);
+    radial-gradient(ellipse 92% 70% at 50% 44%, #26734f 0%, #143828 55%, #0c2218 100%);
   border-radius: 16px;
 }
 
 .felt-pot-badge {
   position: absolute;
   left: 50%;
-  top: 36%;
+  top: 44%;
   transform: translate(-50%, -50%);
   padding: 0.35rem 0.75rem;
   border-radius: 999px;
@@ -229,7 +230,7 @@
 
 .seats-ring {
   position: absolute;
-  inset: 4% 4% 30%;
+  inset: 11% 5% 27%;
   border-radius: 50%;
   border: 2px solid rgba(255, 255, 255, 0.07);
   pointer-events: none;
@@ -256,9 +257,9 @@
 .seat--hero {
   position: absolute;
   left: 50%;
-  bottom: 0.35rem;
+  bottom: clamp(0.45rem, 1.8vw, 0.85rem);
   transform: translateX(-50%);
-  width: min(calc(100% - 1rem), 400px);
+  width: min(calc(100% - 1rem), 460px);
   z-index: 3;
   display: flex;
   justify-content: center;
@@ -266,9 +267,9 @@
 }
 
 .player-card {
-  min-width: 120px;
+  min-width: 132px;
   max-width: 100%;
-  padding: 0.5rem 0.55rem;
+  padding: 0.55rem 0.6rem;
   border-radius: 12px;
   background: rgba(0, 0, 0, 0.28);
   border: 1px solid rgba(255, 255, 255, 0.08);
@@ -320,7 +321,7 @@
 }
 
 .bet-status {
-  font-size: 0.62rem;
+  font-size: 0.66rem;
   font-weight: 750;
   text-transform: uppercase;
   letter-spacing: 0.06em;
@@ -357,7 +358,7 @@
 }
 
 .street-chips {
-  font-size: 0.65rem;
+  font-size: 0.7rem;
   color: #9ebfb0;
   margin-bottom: 0.2rem;
   font-variant-numeric: tabular-nums;
@@ -371,7 +372,7 @@
   display: flex;
   align-items: center;
   gap: 0.35rem;
-  font-size: 0.82rem;
+  font-size: 0.88rem;
   font-weight: 600;
 }
 
@@ -388,7 +389,7 @@
 }
 
 .stack {
-  font-size: 0.75rem;
+  font-size: 0.8rem;
   color: #a8c4b6;
   margin-bottom: 0.35rem;
 }
@@ -396,17 +397,19 @@
 .cards-row {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.2rem;
-  min-height: 1.6rem;
+  gap: 0.3rem;
+  min-height: 2rem;
 }
 
 .card {
-  font-size: 0.72rem;
-  padding: 0.15rem 0.28rem;
-  border-radius: 4px;
+  font-size: clamp(0.8rem, 2.6vw, 0.95rem);
+  padding: 0.22rem 0.42rem;
+  border-radius: 6px;
   background: rgba(255, 255, 255, 0.92);
   color: #1a1f1c;
   font-weight: 600;
+  min-width: 1.85em;
+  text-align: center;
 }
 
 .card.back {
@@ -420,7 +423,7 @@
 
 .best-hand {
   margin-top: 0.35rem;
-  font-size: 0.68rem;
+  font-size: 0.74rem;
   color: #cfe8d8;
 }
 

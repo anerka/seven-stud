@@ -25,10 +25,10 @@ function opponentSeatPositions(count: number): { left: number; top: number }[] {
   const start = (-168 * Math.PI) / 180
   const end = (-12 * Math.PI) / 180
   const cx = 50
-  /* Slightly inset so full player cards stay over the green on narrow viewports */
-  const cy = 33
+  /* Lower arc so top seat stays on green; tuned with .felt padding + .seats-ring */
+  const cy = 41
   const rx = 42
-  const ry = 24
+  const ry = 25
   return Array.from({ length: count }, (_, i) => {
     const t = count === 1 ? 0.5 : i / (count - 1)
     const theta = start + (end - start) * t
