@@ -157,6 +157,15 @@ function bettingState(
   return null
 }
 
+/** Human raise button: first aggression on the street is Bet (or Complete), later Raise. */
+function raiseActionLabel(snap: StudSnapshot): string {
+  if (snap.raisesThisStreet > 0) return 'Raise'
+  if (snap.street === 3 && snap.stakes.bringIn < snap.stakes.smallBet) {
+    return 'Complete'
+  }
+  return 'Bet'
+}
+
 type Screen = 'menu' | 'settings' | 'play'
 
 interface ActiveGame {
@@ -674,9 +683,7 @@ function PlayScreen({
                 ) : null}
                 {legal.includes('raise') ? (
                   <button type="button" className="btn accent" onClick={() => act({ type: 'raise' })}>
-                    {snap.street === 3 && snap.stakes.bringIn < snap.stakes.smallBet
-                      ? 'Complete / Raise'
-                      : 'Raise'}
+                    {raiseActionLabel(snap)}
                   </button>
                 ) : null}
               </div>
