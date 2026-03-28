@@ -36,7 +36,7 @@ function PlayingCardFace({
   const suitClass = isRedSuit(c.suit) ? 'card--red-suit' : 'card--black-suit'
   return (
     <span
-      className={['card', kind, suitClass, sunk ? 'card--hero-sunk' : '']
+      className={['card', 'card--face', kind, suitClass, sunk ? 'card--hero-sunk' : '']
         .filter(Boolean)
         .join(' ')}
     >

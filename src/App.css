@@ -356,7 +356,7 @@
   display: flex;
   flex-wrap: nowrap;
   gap: 0;
-  min-height: 2.15rem;
+  min-height: 2.75rem;
   align-items: flex-start;
   justify-content: center;
 }
@@ -366,9 +366,9 @@
   flex-shrink: 0;
 }
 
-/* Heavy overlap like PokerStars — only a sliver of each left card shows */
+/* Tight fan — taller cards still leave rank + suit visible in the peek */
 .cards-row--hero-line .card:not(:first-child) {
-  margin-left: -1.22em;
+  margin-left: -1.38em;
   box-shadow: -2px 0 5px rgba(0, 0, 0, 0.22);
 }
 
@@ -437,7 +437,7 @@
 }
 
 .seat--opp .cards-row {
-  min-height: 2rem;
+  min-height: 2.75rem;
   justify-content: center;
 }
 
@@ -447,7 +447,7 @@
 }
 
 .seat--opp .cards-row--spread .card:not(:first-child) {
-  margin-left: -1.2em;
+  margin-left: -1.36em;
   box-shadow: -2px 0 5px rgba(0, 0, 0, 0.3);
 }
 
@@ -484,7 +484,7 @@
 }
 
 .seat--opp .cards-row--hole-pocket .card:not(:first-child) {
-  margin-left: -1.08em;
+  margin-left: -1.22em;
 }
 
 .seat--opp .player-head {
@@ -666,7 +666,7 @@
 }
 
 .cards-row--hole-pocket .card:not(:first-child) {
-  margin-left: -1.08em;
+  margin-left: -1.22em;
   box-shadow: -2px 0 6px rgba(0, 0, 0, 0.35);
 }
 
@@ -699,9 +699,27 @@
   font-variant-numeric: tabular-nums;
 }
 
-.card-face__rank,
+/* Rank above suit — taller card so both stay readable when fanned */
+.card.card--face {
+  flex-direction: column;
+  gap: 0.1em;
+  justify-content: center;
+  align-items: center;
+  min-width: 1.42em;
+  min-height: 2.75em;
+  padding: 0.2rem 0.28rem 0.26rem;
+  font-size: clamp(0.82rem, 2.75vw, 1rem);
+}
+
+.card-face__rank {
+  line-height: 1;
+  font-size: 1.05em;
+  font-weight: 700;
+}
+
 .card-face__suit {
   line-height: 1;
+  font-size: 1.12em;
 }
 
 /* Hearts & diamonds — saturated red vs near-black clubs/spades */
@@ -853,19 +871,28 @@
   }
 
   .seat--opp .cards-row {
-    min-height: 2rem;
+    min-height: 2.65rem;
   }
 
   .seat--opp .cards-row--spread .card:not(:first-child) {
-    margin-left: -1.05em;
+    margin-left: -1.22em;
   }
 
   .seat--opp .cards-row--hole-pocket .card:not(:first-child) {
-    margin-left: -0.95em;
+    margin-left: -1.1em;
+  }
+
+  .cards-row--hero-line {
+    min-height: 2.65rem;
   }
 
   .cards-row--hero-line .card:not(:first-child) {
-    margin-left: -1.05em;
+    margin-left: -1.22em;
+  }
+
+  .card.card--face {
+    min-height: 2.55em;
+    min-width: 1.32em;
   }
 
   .seat--opp .bet-status {
