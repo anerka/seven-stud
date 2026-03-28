@@ -2,7 +2,6 @@ import {
   useCallback,
   useEffect,
   useMemo,
-  useRef,
   useState,
   type CSSProperties,
 } from 'react'
@@ -24,7 +23,7 @@ import {
   type GameSettings,
 } from './settings/types'
 import './App.css'
-import { playBettingSound } from './audio/bettingSounds'
+import { playBettingSoundIfNew, unlockBettingAudio } from './audio/bettingSounds'
 import { InstallAppBanner } from './pwa/InstallAppBanner'
 
 function PlayingCardFace({
@@ -271,6 +270,7 @@ export default function App() {
   }, [])
 
   const startGame = useCallback(() => {
+    unlockBettingAudio()
     const engine = new StudEngine(settings)
     engine.startSession()
     engine.beginHand()
@@ -531,14 +531,12 @@ function PlayScreen({
   const { engine, snap } = game
   const { narrow: narrowTable, aiPauseMs } = usePlayTableLayout()
   const [aiDrive, setAiDrive] = useState(0)
-  const lastBettingSoundNonceRef = useRef(0)
 
   useEffect(() => {
-    const n = snap.bettingSoundNonce
-    if (n <= lastBettingSoundNonceRef.current) return
-    lastBettingSoundNonceRef.current = n
-    if (snap.lastBettingSound) playBettingSound(snap.lastBettingSound)
-  }, [snap.bettingSoundNonce, snap.lastBettingSound])
+    const onFirstTouch = () => unlockBettingAudio()
+    window.addEventListener('pointerdown', onFirstTouch, { once: true, passive: true })
+    return () => window.removeEventListener('pointerdown', onFirstTouch)
+  }, [])
 
   useEffect(() => {
     if (
@@ -549,7 +547,10 @@ function PlayScreen({
       return
     }
     const id = window.setTimeout(() => {
+      const before = engine.snapshot().bettingSoundNonce
       engine.stepAiOnce()
+      const s = engine.snapshot()
+      playBettingSoundIfNew(before, s.bettingSoundNonce, s.lastBettingSound)
       onRefresh()
       setAiDrive((d) => d + 1)
     }, aiPauseMs)
@@ -567,7 +568,10 @@ function PlayScreen({
   const legal = snap.humanMustAct ? engine.legalHumanActions() : []
 
   const act = (a: HumanAction) => {
+    const before = engine.snapshot().bettingSoundNonce
     engine.applyHuman(a)
+    const s = engine.snapshot()
+    playBettingSoundIfNew(before, s.bettingSoundNonce, s.lastBettingSound)
     onRefresh()
   }
 

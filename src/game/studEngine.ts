@@ -432,7 +432,28 @@ export class StudEngine {
     return tied[0] ?? bestIdx
   }
 
+  /**
+   * After a street closes with unequal commitments (short all-in vs full bets),
+   * return uncalled chips to anyone who bet more than the best anyone else matched.
+   */
+  private refundUncalledStreetBets(): void {
+    const active = this.players.filter((p) => !p.folded)
+    if (active.length < 2) return
+    const snap = active.map((p) => ({ p, c: p.streetCommit }))
+    for (const { p, c } of snap) {
+      const maxOther = Math.max(0, ...snap.filter((x) => x.p !== p).map((x) => x.c))
+      if (c > maxOther) {
+        const refund = c - maxOther
+        p.streetCommit -= refund
+        p.contributedPot -= refund
+        p.stack += refund
+        this.pot -= refund
+      }
+    }
+  }
+
   private advanceAfterBettingRound(): void {
+    this.refundUncalledStreetBets()
     const inHand = this.players.filter((p) => !p.folded)
     if (inHand.length === 1) {
       this.awardPotToSingle(inHand[0].id)
@@ -607,13 +628,35 @@ export class StudEngine {
     return this.legalActionTypesForSeat(this.actionIndex!)
   }
 
+  /** Full increment raise; short-stack can still raise all-in via `canShortAllInRaise`. */
+  private canFullRaise(i: number): boolean {
+    const p = this.players[i]
+    if (this.raisesThisStreet >= MAX_RAISES_PER_STREET) return false
+    const rc = this.raiseCost(p)
+    return rc > 0 && p.stack >= rc
+  }
+
+  /**
+   * All-in for less than a full bet/raise (still puts full stack in when calling,
+   * or raises to streetCommit+stack when that exceeds current high bet).
+   */
+  private canShortAllInRaise(i: number): boolean {
+    const p = this.players[i]
+    if (this.raisesThisStreet >= MAX_RAISES_PER_STREET) return false
+    if (p.stack <= 0) return false
+    const toCall = Math.max(0, this.highBet - p.streetCommit)
+    if (this.checkRound && this.highBet === 0) {
+      return p.stack > 0
+    }
+    if (toCall > 0 && p.stack < toCall) return false
+    return p.streetCommit + p.stack > this.highBet
+  }
+
   /** Legal actions for a seat (same rules as the human UI). */
   private legalActionTypesForSeat(i: number): HumanAction['type'][] {
     const p = this.players[i]
     const toCall = Math.max(0, this.highBet - p.streetCommit)
-    const rc = this.raiseCost(p)
-    const canRaise =
-      this.raisesThisStreet < MAX_RAISES_PER_STREET && rc > 0 && p.stack >= rc
+    const canRaise = this.canFullRaise(i) || this.canShortAllInRaise(i)
     const out: HumanAction['type'][] = ['fold']
     if (this.checkRound && this.highBet === 0) {
       out.push('check')
@@ -691,8 +734,7 @@ export class StudEngine {
         : Math.max(0, this.highBet - p.streetCommit)
     const rc = this.raiseCost(p)
     const canCheck = toCall === 0
-    const canRaise =
-      this.raisesThisStreet < MAX_RAISES_PER_STREET && rc > 0 && p.stack >= rc
+    const canRaise = this.canFullRaise(i) || this.canShortAllInRaise(i)
     const activeOpponents = this.players.filter(
       (x, j) => j !== i && !x.folded,
     ).length
@@ -733,13 +775,21 @@ export class StudEngine {
         ? aliveInBettingOrbit - this.checkPending.size
         : 0
 
+    const maxCommit = p.streetCommit + p.stack
+    let raiseIncrement = 0
+    if (canRaise) {
+      raiseIncrement = this.canFullRaise(i)
+        ? rc
+        : Math.max(0, maxCommit - this.highBet)
+    }
+
     return {
       difficulty: this.settings.difficulty,
       hole: p.hole,
       up: p.up,
       toCall,
       pot: this.pot,
-      raiseIncrement: canRaise ? rc : 0,
+      raiseIncrement,
       canCheck,
       canRaise,
       stack: p.stack,
