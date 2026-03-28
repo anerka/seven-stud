@@ -2,6 +2,7 @@ import {
   useCallback,
   useEffect,
   useMemo,
+  useRef,
   useState,
   type CSSProperties,
 } from 'react'
@@ -23,6 +24,8 @@ import {
   type GameSettings,
 } from './settings/types'
 import './App.css'
+import { playBettingSound } from './audio/bettingSounds'
+import { InstallAppBanner } from './pwa/InstallAppBanner'
 
 function PlayingCardFace({
   c,
@@ -528,6 +531,14 @@ function PlayScreen({
   const { engine, snap } = game
   const { narrow: narrowTable, aiPauseMs } = usePlayTableLayout()
   const [aiDrive, setAiDrive] = useState(0)
+  const lastBettingSoundNonceRef = useRef(0)
+
+  useEffect(() => {
+    const n = snap.bettingSoundNonce
+    if (n <= lastBettingSoundNonceRef.current) return
+    lastBettingSoundNonceRef.current = n
+    if (snap.lastBettingSound) playBettingSound(snap.lastBettingSound)
+  }, [snap.bettingSoundNonce, snap.lastBettingSound])
 
   useEffect(() => {
     if (
@@ -751,14 +762,17 @@ function PlayScreen({
           </div>
 
           {snap.phase === 'handSummary' ? (
-            <div className="summary-panel">
-              <p>{snap.lastSummary}</p>
-              <div className="summary-panel__actions">
-                <button type="button" className="btn primary" onClick={continueHand}>
-                  Next hand
-                </button>
+            <>
+              <InstallAppBanner visible={snap.handNumber >= 1} />
+              <div className="summary-panel">
+                <p>{snap.lastSummary}</p>
+                <div className="summary-panel__actions">
+                  <button type="button" className="btn primary" onClick={continueHand}>
+                    Next hand
+                  </button>
+                </div>
               </div>
-            </div>
+            </>
           ) : null}
 
           <div className="actions-slot">

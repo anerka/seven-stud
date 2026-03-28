@@ -89,6 +89,9 @@ function cloneSessionStats(s: SessionStats): SessionStats {
   }
 }
 
+/** UI maps `chips` → bet/call WAV; `raise` → raise-over MP3. */
+export type BettingSound = 'chips' | 'raise'
+
 export interface StudSnapshot {
   phase: SessionPhase
   players: TablePlayer[]
@@ -109,6 +112,12 @@ export interface StudSnapshot {
   message: string
   lastSummary: string | null
   sessionStats: SessionStats
+  /**
+   * Increments when a player calls or puts chips in as bet/raise.
+   * UI should play `lastBettingSound` whenever this value increases (avoids Strict Mode drops).
+   */
+  bettingSoundNonce: number
+  lastBettingSound: BettingSound | null
 }
 
 export type HumanAction =
@@ -164,6 +173,8 @@ export class StudEngine {
   private checkPending = new Set<number>()
   /** Last seat that put in a raise / opening bet this street. */
   private lastAggressorSeat: number | null = null
+  private bettingSoundNonce = 0
+  private lastBettingSound: BettingSound | null = null
   stakes: EffectiveStakes
 
   constructor(settings: GameSettings, rng: () => number = Math.random) {
@@ -195,7 +206,14 @@ export class StudEngine {
       message: this.message,
       lastSummary: this.lastSummary,
       sessionStats: cloneSessionStats(this.sessionStats),
+      bettingSoundNonce: this.bettingSoundNonce,
+      lastBettingSound: this.lastBettingSound,
     }
+  }
+
+  private emitBettingSound(kind: BettingSound): void {
+    this.bettingSoundNonce += 1
+    this.lastBettingSound = kind
   }
 
   startSession(): void {
@@ -237,6 +255,8 @@ export class StudEngine {
     this.message = 'Session started. Deal first hand when ready.'
     this.lastSummary = null
     this.sessionStats = emptySessionStats()
+    this.bettingSoundNonce = 0
+    this.lastBettingSound = null
   }
 
   /** Call after hand summary to continue. */
@@ -758,6 +778,7 @@ export class StudEngine {
       p.contributedPot += pay
       this.pot += pay
       if (p.stack === 0) p.allIn = true
+      if (pay > 0) this.emitBettingSound('chips')
       this.afterAction(i)
       return
     }
@@ -768,6 +789,7 @@ export class StudEngine {
         this.checkRound = false
         this.checkPending.clear()
       }
+      const openingAggression = this.raisesThisStreet === 0
       const newHigh = this.nextRaiseTarget()
       const cost = newHigh - p.streetCommit
       if (cost <= 0) return
@@ -782,6 +804,9 @@ export class StudEngine {
           this.highBet = p.streetCommit
           this.raisesThisStreet += 1
           this.lastAggressorSeat = i
+          this.emitBettingSound(openingAggression ? 'chips' : 'raise')
+        } else if (pay > 0) {
+          this.emitBettingSound('chips')
         }
         this.afterAction(i)
         return
@@ -794,6 +819,7 @@ export class StudEngine {
       this.raisesThisStreet += 1
       this.lastAggressorSeat = i
       if (p.stack === 0) p.allIn = true
+      this.emitBettingSound(openingAggression ? 'chips' : 'raise')
       this.afterAction(i)
     }
   }

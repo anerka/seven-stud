@@ -797,6 +797,37 @@
   width: 100%;
 }
 
+.install-app-banner {
+  width: 100%;
+  max-width: 420px;
+  padding: 0.75rem 1rem;
+  text-align: center;
+  background: rgba(0, 40, 32, 0.35);
+  border: 1px solid rgba(120, 200, 170, 0.2);
+  border-radius: 12px;
+  box-sizing: border-box;
+}
+
+.install-app-banner--hint {
+  background: rgba(0, 0, 0, 0.22);
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+.install-app-banner__text {
+  margin: 0 0 0.6rem;
+  font-size: 0.84rem;
+  line-height: 1.4;
+  color: #cfe8d8;
+}
+
+.install-app-banner__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  justify-content: center;
+  align-items: center;
+}
+
 .actions-slot {
   width: 100%;
   max-width: 420px;
