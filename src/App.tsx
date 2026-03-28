@@ -81,6 +81,8 @@ function opponentSeatPositions(
   /* rx was 27 on narrow + left clamp 22–78%, which bunched bots away from screen edges */
   const rx = narrow ? 40 : 42
   const ry = narrow ? 18 : 25
+  /** Slight inward shift for arc ends so a full 7-card fan stays inside the felt. */
+  const edgeNudgePct = narrow ? 2.25 : 1.75
   return Array.from({ length: count }, (_, i) => {
     const t = count === 1 ? 0.5 : i / (count - 1)
     const theta = start + (end - start) * t
@@ -88,6 +90,10 @@ function opponentSeatPositions(
     let top = cy + ry * Math.sin(theta)
     if (narrow) {
       top = Math.min(38, Math.max(14, top))
+    }
+    if (count >= 2) {
+      if (i === 0) left += edgeNudgePct
+      if (i === count - 1) left -= edgeNudgePct
     }
     return { left, top }
   })
